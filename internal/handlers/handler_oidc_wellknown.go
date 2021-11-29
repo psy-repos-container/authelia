@@ -19,6 +19,8 @@ func oidcWellKnown(ctx *middlewares.AutheliaCtx) {
 		return
 	}
 
+	ctx.Logger.Trace("Received request for OIDC configuration")
+
 	wellKnown := oidc.WellKnownConfiguration{
 		Issuer:  issuer,
 		JWKSURI: fmt.Sprintf("%s%s", issuer, pathOpenIDConnectJWKs),
@@ -79,6 +81,8 @@ func oidcWellKnown(ctx *middlewares.AutheliaCtx) {
 		BackChannelLogoutSessionSupported:  false,
 		FrontChannelLogoutSessionSupported: false,
 	}
+
+	ctx.Logger.Tracef("Responding to request for OIDC configuration with %+v", wellKnown)
 
 	ctx.SetContentType("application/json")
 
