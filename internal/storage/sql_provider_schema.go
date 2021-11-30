@@ -126,7 +126,7 @@ func (p *SQLProvider) schemaMigrate(ctx context.Context, prior, target int) (err
 		return err
 	}
 
-	if len(migrations) == 0 {
+	if len(migrations) == 0 && prior != 1 && target != -1 {
 		return ErrNoMigrationsFound
 	}
 
