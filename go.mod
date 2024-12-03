@@ -42,10 +42,10 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/trustelem/zxcvbn v1.0.1
 	github.com/valyala/fasthttp v1.57.0
-	github.com/weppos/publicsuffix-go v0.40.3-0.20241113104638-64ced1f03374
+	github.com/weppos/publicsuffix-go v0.40.3-0.20241203083616-2ff4d439fb19
 	github.com/wneessen/go-mail v0.5.2
 	go.uber.org/mock v0.5.0
 	golang.org/x/net v0.31.0
