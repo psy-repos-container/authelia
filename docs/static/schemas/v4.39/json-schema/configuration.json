@@ -734,6 +734,11 @@
           "title": "TLS",
           "description": "The LDAP directory server TLS connection properties."
         },
+        "pooling": {
+          "$ref": "#/$defs/AuthenticationBackendLDAPPooling",
+          "title": "Pooling",
+          "description": "The LDAP Connection Pooling properties."
+        },
         "base_dn": {
           "type": "string",
           "title": "Base DN",
@@ -765,7 +770,7 @@
             "filter",
             "memberof"
           ],
-          "title": "Groups Search Mode",
+          "title": "Groups Search Modes",
           "description": "The LDAP group search mode used to search for group objects.",
           "default": "filter"
         },
@@ -963,6 +968,44 @@
           ],
           "title": "Value Type",
           "description": "Defines the value type for the attribute."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "AuthenticationBackendLDAPPooling": {
+      "properties": {
+        "enable": {
+          "type": "boolean",
+          "title": "Enable",
+          "description": "Enable LDAP connection pooling.",
+          "default": false
+        },
+        "count": {
+          "type": "integer",
+          "title": "Count",
+          "description": "The number of connections to keep open for LDAP connection pooling.",
+          "default": 5
+        },
+        "retries": {
+          "type": "integer",
+          "title": "Retries",
+          "description": "The number of attempts to retrieve a connection from the pool during the timeout.",
+          "default": 2
+        },
+        "timeout": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d+\\s*(y|M|w|d|h|m|s|ms|((year|month|week|day|hour|minute|second|millisecond)s?))(\\s*\\d+\\s*(y|M|w|d|h|m|s|ms|((year|month|week|day|hour|minute|second|millisecond)s?)))*$"
+            },
+            {
+              "type": "integer",
+              "description": "The duration in seconds"
+            }
+          ],
+          "title": "Timeout",
+          "description": "The duration of time to wait for a connection to become available in the connection pool."
         }
       },
       "additionalProperties": false,
@@ -1350,6 +1393,7 @@
             "type": "string",
             "enum": [
               "authorization",
+              "device-authorization",
               "pushed-authorization-request",
               "token",
               "introspection",
@@ -1487,7 +1531,8 @@
               "authorization_code",
               "implicit",
               "refresh_token",
-              "client_credentials"
+              "client_credentials",
+              "urn:ietf:params:oauth:grant-type:device_code"
             ]
           },
           "type": "array",
@@ -1552,8 +1597,8 @@
             "explicit",
             "implicit"
           ],
-          "title": "Requested Audience Mode",
-          "description": "The Requested Audience Mode used for this client."
+          "title": "Requested Audience Modes",
+          "description": "The Requested Audience Modes used for this client."
         },
         "consent_mode": {
           "type": "string",
@@ -1563,8 +1608,8 @@
             "implicit",
             "pre-configured"
           ],
-          "title": "Consent Mode",
-          "description": "The Consent Mode used for this client."
+          "title": "Consent Modes",
+          "description": "The Consent Modes used for this client."
         },
         "pre_configured_consent_duration": {
           "oneOf": [
@@ -1578,7 +1623,7 @@
             }
           ],
           "title": "Pre-Configured Consent Duration",
-          "description": "The Pre-Configured Consent Duration when using Consent Mode pre-configured for this client."
+          "description": "The Pre-Configured Consent Duration when using Consent Modes pre-configured for this client."
         },
         "require_pushed_authorization_requests": {
           "type": "boolean",
@@ -1615,14 +1660,56 @@
             "PS384",
             "PS512"
           ],
-          "title": "Authorization Response Signing Algorithm",
-          "description": "The Authorization Endpoint Signing Algorithm this client uses.",
+          "title": "Authorization Signing Algorithm",
+          "description": "The JOSE signing algorithm (JWS) this client uses to sign the Authorization objects that it generates and responds with. i.e. the JWS 'alg' value.",
           "default": "none"
         },
         "authorization_signed_response_key_id": {
           "type": "string",
-          "title": "Authorization Response Signing Key ID",
-          "description": "The Key ID this client uses to sign the Authorization responses (overrides the 'authorization_signed_response_alg')."
+          "title": "Authorization Signing Key ID",
+          "description": "The Key ID of a JOSE signing key (JWS) this client uses to sign the Authorization objects that it generates and responds with. This value overrides the 'authorization_signed_response_alg'. i.e. the JWS 'kid' value."
+        },
+        "authorization_encrypted_response_alg": {
+          "type": "string",
+          "enum": [
+            "RSA1_5",
+            "RSA-OAEP",
+            "RSA-OAEP-256",
+            "A128KW",
+            "A192KW",
+            "A256KW",
+            "dir",
+            "ECDH-ES",
+            "ECDH-ES+A128KW",
+            "ECDH-ES+A192KW",
+            "ECDH-ES+A256KW",
+            "A128GCMKW",
+            "A192GCMKW",
+            "A256GCMKW",
+            "PBES2-HS256+A128KW",
+            "PBES2-HS384+A192KW",
+            "PBES2-HS512+A256KW"
+          ],
+          "title": "Authorization Encryption Algorithm (CEK)",
+          "description": "The JOSE encryption algorithm (JWE) this client uses to encrypt the Authorization objects CEK that it generates and responds with. i.e. the JWE 'alg' value."
+        },
+        "authorization_encrypted_response_enc": {
+          "type": "string",
+          "enum": [
+            "A128CBC-HS256",
+            "A192CBC-HS384",
+            "A256CBC-HS512",
+            "A128GCM",
+            "A192GCM",
+            "A256GCM"
+          ],
+          "title": "Authorization Encryption Algorithm (Content)",
+          "description": "The JOSE encryption algorithm (JWE) this client uses to encrypt the Authorization objects content that it generates and responds with. i.e. the JWE 'enc' value."
+        },
+        "authorization_encrypted_response_key_id": {
+          "type": "string",
+          "title": "Authorization Signing Key ID",
+          "description": "The Key ID of a JOSE encryption key (JWE) this client uses to encrypt the Authorization objects that it generates and responds with. This value overrides the 'authorization_encrypted_response_alg' and '%!s(MISSING)_encrypted_response_enc'. i.e. the JWE 'kid' value."
         },
         "id_token_signed_response_alg": {
           "type": "string",
@@ -1638,13 +1725,55 @@
             "PS512"
           ],
           "title": "ID Token Signing Algorithm",
-          "description": "The algorithm (JWA) this client uses to sign ID Tokens.",
+          "description": "The JOSE signing algorithm (JWS) this client uses to sign the ID Token objects that it generates and responds with. i.e. the JWS 'alg' value.",
           "default": "RS256"
         },
         "id_token_signed_response_key_id": {
           "type": "string",
           "title": "ID Token Signing Key ID",
-          "description": "The Key ID this client uses to sign ID Tokens (overrides the 'id_token_signing_alg')."
+          "description": "The Key ID of a JOSE signing key (JWS) this client uses to sign the ID Token objects that it generates and responds with. This value overrides the 'id_token_signed_response_alg'. i.e. the JWS 'kid' value."
+        },
+        "id_token_encrypted_response_alg": {
+          "type": "string",
+          "enum": [
+            "RSA1_5",
+            "RSA-OAEP",
+            "RSA-OAEP-256",
+            "A128KW",
+            "A192KW",
+            "A256KW",
+            "dir",
+            "ECDH-ES",
+            "ECDH-ES+A128KW",
+            "ECDH-ES+A192KW",
+            "ECDH-ES+A256KW",
+            "A128GCMKW",
+            "A192GCMKW",
+            "A256GCMKW",
+            "PBES2-HS256+A128KW",
+            "PBES2-HS384+A192KW",
+            "PBES2-HS512+A256KW"
+          ],
+          "title": "ID Token Encryption Algorithm (CEK)",
+          "description": "The JOSE encryption algorithm (JWE) this client uses to encrypt the ID Token objects CEK that it generates and responds with. i.e. the JWE 'alg' value."
+        },
+        "id_token_encrypted_response_enc": {
+          "type": "string",
+          "enum": [
+            "A128CBC-HS256",
+            "A192CBC-HS384",
+            "A256CBC-HS512",
+            "A128GCM",
+            "A192GCM",
+            "A256GCM"
+          ],
+          "title": "ID Token Encryption Algorithm (Content)",
+          "description": "The JOSE encryption algorithm (JWE) this client uses to encrypt the ID Token objects content that it generates and responds with. i.e. the JWE 'enc' value."
+        },
+        "id_token_encrypted_response_key_id": {
+          "type": "string",
+          "title": "ID Token Signing Key ID",
+          "description": "The Key ID of a JOSE encryption key (JWE) this client uses to encrypt the ID Token objects that it generates and responds with. This value overrides the 'id_token_encrypted_response_alg' and '%!s(MISSING)_encrypted_response_enc'. i.e. the JWE 'kid' value."
         },
         "access_token_signed_response_alg": {
           "type": "string",
@@ -1661,13 +1790,55 @@
             "PS512"
           ],
           "title": "Access Token Signing Algorithm",
-          "description": "The algorithm (JWA) this client uses to sign Access Tokens.",
+          "description": "The JOSE signing algorithm (JWS) this client uses to sign the Access Token objects that it generates and responds with. i.e. the JWS 'alg' value.",
           "default": "none"
         },
         "access_token_signed_response_key_id": {
           "type": "string",
           "title": "Access Token Signing Key ID",
-          "description": "The Key ID this client uses to sign Access Tokens (overrides the 'access_token_signed_response_alg')."
+          "description": "The Key ID of a JOSE signing key (JWS) this client uses to sign the Access Token objects that it generates and responds with. This value overrides the 'access_token_signed_response_alg'. i.e. the JWS 'kid' value."
+        },
+        "access_token_encrypted_response_alg": {
+          "type": "string",
+          "enum": [
+            "RSA1_5",
+            "RSA-OAEP",
+            "RSA-OAEP-256",
+            "A128KW",
+            "A192KW",
+            "A256KW",
+            "dir",
+            "ECDH-ES",
+            "ECDH-ES+A128KW",
+            "ECDH-ES+A192KW",
+            "ECDH-ES+A256KW",
+            "A128GCMKW",
+            "A192GCMKW",
+            "A256GCMKW",
+            "PBES2-HS256+A128KW",
+            "PBES2-HS384+A192KW",
+            "PBES2-HS512+A256KW"
+          ],
+          "title": "Access Token Encryption Algorithm (CEK)",
+          "description": "The JOSE encryption algorithm (JWE) this client uses to encrypt the Access Token objects CEK that it generates and responds with. i.e. the JWE 'alg' value."
+        },
+        "access_token_encrypted_response_enc": {
+          "type": "string",
+          "enum": [
+            "A128CBC-HS256",
+            "A192CBC-HS384",
+            "A256CBC-HS512",
+            "A128GCM",
+            "A192GCM",
+            "A256GCM"
+          ],
+          "title": "Access Token Encryption Algorithm (Content)",
+          "description": "The JOSE encryption algorithm (JWE) this client uses to encrypt the Access Token objects content that it generates and responds with. i.e. the JWE 'enc' value."
+        },
+        "access_token_encrypted_response_key_id": {
+          "type": "string",
+          "title": "Access Token Signing Key ID",
+          "description": "The Key ID of a JOSE encryption key (JWE) this client uses to encrypt the Access Token objects that it generates and responds with. This value overrides the 'access_token_encrypted_response_alg' and '%!s(MISSING)_encrypted_response_enc'. i.e. the JWE 'kid' value."
         },
         "userinfo_signed_response_alg": {
           "type": "string",
@@ -1683,14 +1854,56 @@
             "PS384",
             "PS512"
           ],
-          "title": "UserInfo Response Signing Algorithm",
-          "description": "The UserInfo Endpoint Signing Algorithm this client uses.",
+          "title": "Userinfo Signing Algorithm",
+          "description": "The JOSE signing algorithm (JWS) this client uses to sign the Userinfo objects that it generates and responds with. i.e. the JWS 'alg' value.",
           "default": "none"
         },
         "userinfo_signed_response_key_id": {
           "type": "string",
-          "title": "UserInfo Response Signing Key ID",
-          "description": "The Key ID this client uses to sign the UserInfo responses (overrides the 'userinfo_signed_response_alg')."
+          "title": "Userinfo Signing Key ID",
+          "description": "The Key ID of a JOSE signing key (JWS) this client uses to sign the Userinfo objects that it generates and responds with. This value overrides the 'userinfo_signed_response_alg'. i.e. the JWS 'kid' value."
+        },
+        "userinfo_encrypted_response_alg": {
+          "type": "string",
+          "enum": [
+            "RSA1_5",
+            "RSA-OAEP",
+            "RSA-OAEP-256",
+            "A128KW",
+            "A192KW",
+            "A256KW",
+            "dir",
+            "ECDH-ES",
+            "ECDH-ES+A128KW",
+            "ECDH-ES+A192KW",
+            "ECDH-ES+A256KW",
+            "A128GCMKW",
+            "A192GCMKW",
+            "A256GCMKW",
+            "PBES2-HS256+A128KW",
+            "PBES2-HS384+A192KW",
+            "PBES2-HS512+A256KW"
+          ],
+          "title": "Userinfo Encryption Algorithm (CEK)",
+          "description": "The JOSE encryption algorithm (JWE) this client uses to encrypt the Userinfo objects CEK that it generates and responds with. i.e. the JWE 'alg' value."
+        },
+        "userinfo_encrypted_response_enc": {
+          "type": "string",
+          "enum": [
+            "A128CBC-HS256",
+            "A192CBC-HS384",
+            "A256CBC-HS512",
+            "A128GCM",
+            "A192GCM",
+            "A256GCM"
+          ],
+          "title": "Userinfo Encryption Algorithm (Content)",
+          "description": "The JOSE encryption algorithm (JWE) this client uses to encrypt the Userinfo objects content that it generates and responds with. i.e. the JWE 'enc' value."
+        },
+        "userinfo_encrypted_response_key_id": {
+          "type": "string",
+          "title": "Userinfo Signing Key ID",
+          "description": "The Key ID of a JOSE encryption key (JWE) this client uses to encrypt the Userinfo objects that it generates and responds with. This value overrides the 'userinfo_encrypted_response_alg' and '%!s(MISSING)_encrypted_response_enc'. i.e. the JWE 'kid' value."
         },
         "introspection_signed_response_alg": {
           "type": "string",
@@ -1706,14 +1919,56 @@
             "PS384",
             "PS512"
           ],
-          "title": "Introspection Response Signing Algorithm",
-          "description": "The Introspection Endpoint Signing Algorithm this client uses.",
+          "title": "Introspection Signing Algorithm",
+          "description": "The JOSE signing algorithm (JWS) this client uses to sign the Introspection objects that it generates and responds with. i.e. the JWS 'alg' value.",
           "default": "none"
         },
         "introspection_signed_response_key_id": {
           "type": "string",
-          "title": "Introspection Response Signing Key ID",
-          "description": "The Key ID this client uses to sign the Introspection responses (overrides the 'introspection_signed_response_alg')."
+          "title": "Introspection Signing Key ID",
+          "description": "The Key ID of a JOSE signing key (JWS) this client uses to sign the Introspection objects that it generates and responds with. This value overrides the 'introspection_signed_response_alg'. i.e. the JWS 'kid' value."
+        },
+        "introspection_encrypted_response_alg": {
+          "type": "string",
+          "enum": [
+            "RSA1_5",
+            "RSA-OAEP",
+            "RSA-OAEP-256",
+            "A128KW",
+            "A192KW",
+            "A256KW",
+            "dir",
+            "ECDH-ES",
+            "ECDH-ES+A128KW",
+            "ECDH-ES+A192KW",
+            "ECDH-ES+A256KW",
+            "A128GCMKW",
+            "A192GCMKW",
+            "A256GCMKW",
+            "PBES2-HS256+A128KW",
+            "PBES2-HS384+A192KW",
+            "PBES2-HS512+A256KW"
+          ],
+          "title": "Introspection Encryption Algorithm (CEK)",
+          "description": "The JOSE encryption algorithm (JWE) this client uses to encrypt the Introspection objects CEK that it generates and responds with. i.e. the JWE 'alg' value."
+        },
+        "introspection_encrypted_response_enc": {
+          "type": "string",
+          "enum": [
+            "A128CBC-HS256",
+            "A192CBC-HS384",
+            "A256CBC-HS512",
+            "A128GCM",
+            "A192GCM",
+            "A256GCM"
+          ],
+          "title": "Introspection Encryption Algorithm (Content)",
+          "description": "The JOSE encryption algorithm (JWE) this client uses to encrypt the Introspection objects content that it generates and responds with. i.e. the JWE 'enc' value."
+        },
+        "introspection_encrypted_response_key_id": {
+          "type": "string",
+          "title": "Introspection Signing Key ID",
+          "description": "The Key ID of a JOSE encryption key (JWE) this client uses to encrypt the Introspection objects that it generates and responds with. This value overrides the 'introspection_encrypted_response_alg' and '%!s(MISSING)_encrypted_response_enc'. i.e. the JWE 'kid' value."
         },
         "request_object_signing_alg": {
           "type": "string",
@@ -1729,7 +1984,56 @@
             "PS512"
           ],
           "title": "Request Object Signing Algorithm",
-          "description": "The Request Object Signing Algorithm the provider accepts for this client."
+          "description": "The JOSE signing algorithm (JWS) this client must use to sign Request Objects that it uses. i.e. the JWS 'alg' value."
+        },
+        "request_object_encryption_alg": {
+          "type": "string",
+          "enum": [
+            "RSA1_5",
+            "RSA-OAEP",
+            "RSA-OAEP-256",
+            "A128KW",
+            "A192KW",
+            "A256KW",
+            "dir",
+            "ECDH-ES",
+            "ECDH-ES+A128KW",
+            "ECDH-ES+A192KW",
+            "ECDH-ES+A256KW",
+            "A128GCMKW",
+            "A192GCMKW",
+            "A256GCMKW",
+            "PBES2-HS256+A128KW",
+            "PBES2-HS384+A192KW",
+            "PBES2-HS512+A256KW"
+          ],
+          "title": "Request Object Encryption Algorithm (CEK)",
+          "description": "The JOSE encryption algorithm (JWE) this client must use to encrypt the Request Object CEK. i.e. the JWE 'alg' value."
+        },
+        "request_object_encryption_enc": {
+          "type": "string",
+          "enum": [
+            "A128CBC-HS256",
+            "A192CBC-HS384",
+            "A256CBC-HS512",
+            "A128GCM",
+            "A192GCM",
+            "A256GCM"
+          ],
+          "title": "Request Object Encryption Algorithm (Content)",
+          "description": "The JOSE encryption algorithm (JWE) this client must use to encrypt the Request Object content. i.e. the JWE 'enc' value."
+        },
+        "token_endpoint_auth_method": {
+          "type": "string",
+          "enum": [
+            "none",
+            "client_secret_post",
+            "client_secret_basic",
+            "private_key_jwt",
+            "client_secret_jwt"
+          ],
+          "title": "Token Endpoint Auth Method",
+          "description": "The Token Endpoint Auth Method enforced by the provider for this client."
         },
         "token_endpoint_auth_signing_alg": {
           "type": "string",
@@ -1750,7 +2054,7 @@
           "title": "Token Endpoint Auth Signing Algorithm",
           "description": "The Token Endpoint Auth Signing Algorithm the provider accepts for this client."
         },
-        "token_endpoint_auth_method": {
+        "revocation_endpoint_auth_method": {
           "type": "string",
           "enum": [
             "none",
@@ -1759,8 +2063,89 @@
             "private_key_jwt",
             "client_secret_jwt"
           ],
-          "title": "Token Endpoint Auth Method",
-          "description": "The Token Endpoint Auth Method enforced by the provider for this client."
+          "title": "Revocation Endpoint Auth Method",
+          "description": "The Revocation Endpoint Auth Method enforced by the provider for this client."
+        },
+        "revocation_endpoint_auth_signing_alg": {
+          "type": "string",
+          "enum": [
+            "HS256",
+            "HS384",
+            "HS512",
+            "RS256",
+            "RS384",
+            "RS512",
+            "ES256",
+            "ES384",
+            "ES512",
+            "PS256",
+            "PS384",
+            "PS512"
+          ],
+          "title": "Revocation Endpoint Auth Signing Algorithm",
+          "description": "The Revocation Endpoint Auth Signing Algorithm the provider accepts for this client."
+        },
+        "introspection_endpoint_auth_method": {
+          "type": "string",
+          "enum": [
+            "none",
+            "client_secret_post",
+            "client_secret_basic",
+            "private_key_jwt",
+            "client_secret_jwt"
+          ],
+          "title": "Introspection Endpoint Auth Method",
+          "description": "The Introspection Endpoint Auth Method enforced by the provider for this client."
+        },
+        "introspection_endpoint_auth_signing_alg": {
+          "type": "string",
+          "enum": [
+            "HS256",
+            "HS384",
+            "HS512",
+            "RS256",
+            "RS384",
+            "RS512",
+            "ES256",
+            "ES384",
+            "ES512",
+            "PS256",
+            "PS384",
+            "PS512"
+          ],
+          "title": "Introspection Endpoint Auth Signing Algorithm",
+          "description": "The Introspection Endpoint Auth Signing Algorithm the provider accepts for this client."
+        },
+        "pushed_authorization_request_endpoint_auth_method": {
+          "type": "string",
+          "enum": [
+            "none",
+            "client_secret_post",
+            "client_secret_basic",
+            "private_key_jwt",
+            "client_secret_jwt"
+          ],
+          "title": "Pushed Authorization Request Endpoint Auth Method",
+          "description": "The Pushed Authorization Request Endpoint Auth Method enforced by the provider for this client."
+        },
+        "pushed_authorization_request_endpoint_auth_signing_alg": {
+          "type": "string",
+          "enum": [
+            "HS256",
+            "HS384",
+            "HS512",
+            "RS256",
+            "RS384",
+            "RS512",
+            "ES256",
+            "ES384",
+            "ES512",
+            "PS256",
+            "PS384",
+            "PS512"
+          ],
+          "title": "Pushed Authorization Request Endpoint Auth Signing Algorithm",
+          "description": "The Pushed Authorization Request Endpoint Auth Signing Algorithm the provider accepts for this client."
         },
         "allow_multiple_auth_methods": {
           "type": "boolean",
@@ -2050,7 +2435,7 @@
             }
           ],
           "title": "JARM",
-          "description": "Allows tuning the token lifespan for the JWT Secured Authorization Response Mode (JARM)."
+          "description": "Allows tuning the token lifespan for the JWT Secured Authorization Response Modes (JARM)."
         },
         "custom": {
           "patternProperties": {
@@ -2672,6 +3057,21 @@
     },
     "Regulation": {
       "properties": {
+        "modes": {
+          "items": {
+            "type": "string",
+            "enum": [
+              "user",
+              "ip"
+            ]
+          },
+          "type": "array",
+          "title": "Regulation Modes",
+          "description": "The modes to use for regulation.",
+          "default": [
+            "user"
+          ]
+        },
         "max_retries": {
           "type": "integer",
           "title": "Maximum Retries",
@@ -2861,6 +3261,20 @@
           "default": [
             "basic"
           ]
+        },
+        "scheme_basic_cache_lifespan": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d+\\s*(y|M|w|d|h|m|s|ms|((year|month|week|day|hour|minute|second|millisecond)s?))(\\s*\\d+\\s*(y|M|w|d|h|m|s|ms|((year|month|week|day|hour|minute|second|millisecond)s?)))*$"
+            },
+            {
+              "type": "integer",
+              "description": "The duration in seconds"
+            }
+          ],
+          "title": "Scheme Basic Cache Lifespan",
+          "description": "The lifespan for cached basic scheme authorization attempts."
         }
       },
       "additionalProperties": false,
@@ -3294,7 +3708,7 @@
         "address": {
           "$ref": "#/$defs/AddressTCP",
           "title": "Address",
-          "description": "The address of the database."
+          "description": "The address of the SQL Server."
         },
         "database": {
           "type": "string",
@@ -3338,7 +3752,7 @@
         "address": {
           "$ref": "#/$defs/AddressTCP",
           "title": "Address",
-          "description": "The address of the database."
+          "description": "The address of the SQL Server."
         },
         "database": {
           "type": "string",
@@ -3369,14 +3783,22 @@
           "title": "Timeout",
           "description": "The timeout for the database connection."
         },
+        "tls": {
+          "$ref": "#/$defs/TLS"
+        },
         "schema": {
           "type": "string",
           "title": "Schema",
           "description": "The default schema name to use.",
           "default": "public"
         },
-        "tls": {
-          "$ref": "#/$defs/TLS"
+        "servers": {
+          "items": {
+            "$ref": "#/$defs/StoragePostgreSQLServer"
+          },
+          "type": "array",
+          "title": "Servers",
+          "description": "The fallback PostgreSQL severs to connect to in addition to the one defined by the address."
         },
         "ssl": {
           "$ref": "#/$defs/StoragePostgreSQLSSL",
@@ -3425,6 +3847,20 @@
       "additionalProperties": false,
       "type": "object",
       "description": "StoragePostgreSQLSSL represents the SSL configuration of a PostgreSQL database."
+    },
+    "StoragePostgreSQLServer": {
+      "properties": {
+        "address": {
+          "$ref": "#/$defs/AddressTCP",
+          "title": "Address",
+          "description": "The address of the PostgreSQL Server."
+        },
+        "tls": {
+          "$ref": "#/$defs/TLS"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
     },
     "TLS": {
       "properties": {
@@ -3622,6 +4058,14 @@
       "type": "object",
       "description": "TelemetryMetrics represents the telemetry metrics config."
     },
+    "UUID": {
+      "items": {
+        "type": "integer"
+      },
+      "type": "array",
+      "maxItems": 16,
+      "minItems": 16
+    },
     "UserAttribute": {
       "properties": {
         "expression": {
@@ -3644,6 +4088,18 @@
           "description": "Disables the WebAuthn 2FA functionality.",
           "default": false
         },
+        "enable_passkey_login": {
+          "type": "boolean",
+          "title": "Enable Passkey Logins",
+          "description": "Allows users to sign in via Passkeys.",
+          "default": false
+        },
+        "experimental_enable_passkey_uv_two_factors": {
+          "type": "boolean",
+          "title": "Experimental: Enable User Verified Passkey Second Factor",
+          "description": "This option is experimental and WILL be removed. When true this will consider a Passkey login where the WebAuthn user verification requirement is met as being a single event 2FA login.",
+          "default": false
+        },
         "display_name": {
           "type": "string",
           "title": "Display Name",
@@ -3661,17 +4117,6 @@
           "description": "The default conveyance preference for all WebAuthn credentials.",
           "default": "indirect"
         },
-        "user_verification": {
-          "type": "string",
-          "enum": [
-            "discouraged",
-            "preferred",
-            "required"
-          ],
-          "title": "User Verification",
-          "description": "The default user verification preference for all WebAuthn credentials.",
-          "default": "preferred"
-        },
         "timeout": {
           "oneOf": [
             {
@@ -3685,11 +4130,176 @@
           ],
           "title": "Timeout",
           "description": "The default timeout for all WebAuthn ceremonies."
+        },
+        "filtering": {
+          "$ref": "#/$defs/WebAuthnFiltering",
+          "title": "Filtering",
+          "description": "WebAuthn Authenticator filtering settings."
+        },
+        "selection_criteria": {
+          "$ref": "#/$defs/WebAuthnSelectionCriteria",
+          "description": "WebAuthn Authenticator selection criteria settings."
+        },
+        "metadata": {
+          "$ref": "#/$defs/WebAuthnMetadata",
+          "description": "WebAuthn Metadata Service settings."
         }
       },
       "additionalProperties": false,
       "type": "object",
       "description": "WebAuthn represents the webauthn config."
+    },
+    "WebAuthnFiltering": {
+      "properties": {
+        "prohibit_backup_eligibility": {
+          "type": "boolean",
+          "title": "Prohibit Backup Eligibility",
+          "description": "Prohibits registering authenticators which claim backup eligibility i.e. exporting credentials off of the device.",
+          "default": false
+        },
+        "permitted_aaguids": {
+          "items": {
+            "$ref": "#/$defs/UUID"
+          },
+          "type": "array",
+          "title": "Permitted AAGUIDs",
+          "description": "List of allowed WebAuthn AAGUIDs. No other authenticator can be registered."
+        },
+        "prohibited_aaguids": {
+          "items": {
+            "$ref": "#/$defs/UUID"
+          },
+          "type": "array",
+          "title": "Prohibited AAGUIDs",
+          "description": "List of prohibited WebAuthn AAGUIDs. Authenticators with these AAGUIDs cannot be registered."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "WebAuthnMetadata": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "Enabled",
+          "description": "Enables the use of the WebAuthn Metadata Service.",
+          "default": false
+        },
+        "validate_trust_anchor": {
+          "type": "boolean",
+          "title": "Validate Trust Anchor",
+          "description": "WebAuthn Authenticator metadata entry trust anchor validation.",
+          "default": true
+        },
+        "validate_entry": {
+          "type": "boolean",
+          "title": "Filtering",
+          "description": "WebAuthn Authenticator metadata entry validation requires the AAGUID exists as a MDS3 registered entry.",
+          "default": true
+        },
+        "validate_entry_permit_zero_aaguid": {
+          "type": "boolean",
+          "title": "Filtering",
+          "description": "WebAuthn Authenticator metadata entry validation zero AAGUID's can be skipped'.",
+          "default": true
+        },
+        "validate_status": {
+          "type": "boolean",
+          "title": "Validate Status",
+          "description": "WebAuthn Authenticator status validation.",
+          "default": true
+        },
+        "validate_status_permitted": {
+          "items": {
+            "type": "string",
+            "enum": [
+              "FIDO_NOT_CERTIFIED",
+              "FIDO_CERTIFIED",
+              "USER_VERIFICATION_BYPASS",
+              "ATTESTATION_KEY_COMPROMISE",
+              "USER_KEY_REMOTE_COMPROMISE",
+              "USER_KEY_PHYSICAL_COMPROMISE",
+              "UPDATE_AVAILABLE",
+              "REVOKED",
+              "SELF_ASSERTION_SUBMITTED",
+              "FIDO_CERTIFIED_L1",
+              "FIDO_CERTIFIED_L1plus",
+              "FIDO_CERTIFIED_L2",
+              "FIDO_CERTIFIED_L2plus",
+              "FIDO_CERTIFIED_L3",
+              "FIDO_CERTIFIED_L3plus"
+            ]
+          },
+          "type": "array",
+          "title": "Validate Status (Permitted Statuses)",
+          "description": "WebAuthn Authenticator status validation can be configured to permit certain statuses. Generally this is discouraged."
+        },
+        "validate_status_prohibited": {
+          "items": {
+            "type": "string",
+            "enum": [
+              "FIDO_NOT_CERTIFIED",
+              "FIDO_CERTIFIED",
+              "USER_VERIFICATION_BYPASS",
+              "ATTESTATION_KEY_COMPROMISE",
+              "USER_KEY_REMOTE_COMPROMISE",
+              "USER_KEY_PHYSICAL_COMPROMISE",
+              "UPDATE_AVAILABLE",
+              "REVOKED",
+              "SELF_ASSERTION_SUBMITTED",
+              "FIDO_CERTIFIED_L1",
+              "FIDO_CERTIFIED_L1plus",
+              "FIDO_CERTIFIED_L2",
+              "FIDO_CERTIFIED_L2plus",
+              "FIDO_CERTIFIED_L3",
+              "FIDO_CERTIFIED_L3plus"
+            ]
+          },
+          "type": "array",
+          "title": "Validate Status (Prohibited Statuses)",
+          "description": "WebAuthn Authenticator status validation can prohibit certain statuses. Generally this is discouraged as the defaults are safe."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "WebAuthnSelectionCriteria": {
+      "properties": {
+        "attachment": {
+          "type": "string",
+          "enum": [
+            "platform",
+            "cross-platform"
+          ],
+          "title": "Attachment",
+          "description": "WebAuthn Authenticator attachment preference.",
+          "default": ""
+        },
+        "discoverability": {
+          "type": "string",
+          "enum": [
+            "discouraged",
+            "preferred",
+            "required"
+          ],
+          "title": "Discoverability Selection",
+          "description": "The default discoverable preference when registering WebAuthn credentials.",
+          "default": "preferred"
+        },
+        "user_verification": {
+          "type": "string",
+          "enum": [
+            "discouraged",
+            "preferred",
+            "required"
+          ],
+          "title": "User Verification",
+          "description": "The default user verification preference for all WebAuthn credentials.",
+          "default": "preferred"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
     },
     "X509CertificateChain": {
       "type": "string",

@@ -1,11 +1,11 @@
 module github.com/authelia/authelia/v4
 
-go 1.23
+go 1.23.0
 
 toolchain go1.24.0
 
 require (
-	authelia.com/provider/oauth2 v0.1.19
+	authelia.com/provider/oauth2 v0.2.0
 	github.com/Gurpartap/logrus-stack v0.0.0-20170710170904-89c00d8a28f4
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/authelia/jsonschema v0.1.7
@@ -16,13 +16,13 @@ require (
 	github.com/fasthttp/session/v2 v2.5.9
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/go-asn1-ber/asn1-ber v1.5.7
-	github.com/go-crypt/crypt v0.3.2
-	github.com/go-jose/go-jose/v4 v4.0.4
+	github.com/go-crypt/crypt v0.3.3
+	github.com/go-jose/go-jose/v4 v4.0.5
 	github.com/go-ldap/ldap/v3 v3.4.10
 	github.com/go-rod/rod v0.116.2
 	github.com/go-sql-driver/mysql v1.9.0
 	github.com/go-viper/mapstructure/v2 v2.2.1
-	github.com/go-webauthn/webauthn v0.10.2
+	github.com/go-webauthn/webauthn v0.12.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/cel-go v0.23.2
 	github.com/google/uuid v1.6.0
@@ -46,7 +46,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/trustelem/zxcvbn v1.0.1
 	github.com/valyala/fasthttp v1.59.0
-	github.com/weppos/publicsuffix-go v0.40.3-0.20250219075957-060c16305f3c
+	github.com/weppos/publicsuffix-go v0.40.3-0.20250225163358-a49121864bc8
 	github.com/wneessen/go-mail v0.6.2
 	go.uber.org/mock v0.5.0
 	golang.org/x/net v0.35.0
@@ -72,12 +72,12 @@ require (
 	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
-	github.com/fxamacker/cbor/v2 v2.6.0 // indirect
-	github.com/go-crypt/x v0.3.2 // indirect
+	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
+	github.com/go-crypt/x v0.3.4 // indirect
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
-	github.com/go-webauthn/x v0.1.9 // indirect
+	github.com/go-webauthn/x v0.1.18 // indirect
 	github.com/golang/glog v1.2.4 // indirect
-	github.com/google/go-tpm v0.9.0 // indirect
+	github.com/google/go-tpm v0.9.3 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/iancoleman/orderedmap v0.3.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -110,9 +110,9 @@ require (
 	github.com/ysmood/got v0.40.0 // indirect
 	github.com/ysmood/gson v0.7.3 // indirect
 	github.com/ysmood/leakless v0.9.0 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
+	golang.org/x/crypto v0.34.0 // indirect
 	golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc // indirect
-	golang.org/x/oauth2 v0.24.0 // indirect
+	golang.org/x/oauth2 v0.26.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240826202546-f6391c0de4c7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240826202546-f6391c0de4c7 // indirect
