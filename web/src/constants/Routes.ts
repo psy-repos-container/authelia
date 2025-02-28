@@ -2,6 +2,7 @@ export const IndexRoute: string = "/";
 export const AuthenticatedRoute: string = "/authenticated";
 
 export const SecondFactorRoute: string = "/2fa";
+export const SecondFactorPasswordSubRoute: string = "/password";
 export const SecondFactorWebAuthnSubRoute: string = "/webauthn";
 export const SecondFactorTOTPSubRoute: string = "/one-time-password";
 export const SecondFactorPushSubRoute: string = "/push-notification";
@@ -19,3 +20,4 @@ export const ConsentRoute: string = "/consent";
 export const ConsentOpenIDSubRoute: string = "/openid";
 export const ConsentLoginSubRoute: string = "/login";
 export const ConsentDecisionSubRoute: string = "/decision";
+export const ConsentOpenIDDeviceAuthorizationSubRoute: string = "/device-authorization";

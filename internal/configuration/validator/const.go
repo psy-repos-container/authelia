@@ -155,7 +155,8 @@ const (
 	errStrStorageMultiple                          = "storage: option 'local', 'mysql' and 'postgres' are mutually exclusive but %s have been configured"
 	errStrStorageEncryptionKeyMustBeProvided       = "storage: option 'encryption_key' is required"
 	errStrStorageEncryptionKeyTooShort             = "storage: option 'encryption_key' must be 20 characters or longer"
-	errFmtStorageUserPassMustBeProvided            = "storage: %s: option 'username' and 'password' are required" //nolint:gosec
+	errFmtStorageAddressValidate                   = "storage: %s: option 'address' with value '%s' is invalid: %w"
+	errFmtStorageUserMustBeProvided                = "storage: %s: option 'username' is required"
 	errFmtStorageOptionMustBeProvided              = "storage: %s: option '%s' is required"
 	errFmtStorageOptionAddressConflictWithHostPort = "storage: %s: option 'host' and 'port' can't be configured at the same time as 'address'"
 	errFmtStorageFailedToConvertHostPortToAddress  = "storage: %s: option 'address' failed to parse options 'host' and 'port' as address: %w"
@@ -223,12 +224,12 @@ const (
 	errFmtOIDCWhenScope                       = "when configured with scope '%s'"
 	errFmtOIDCClientInvalidSecretIs           = errFmtOIDCClientOption + "'client_secret' is "
 	errFmtOIDCClientInvalidSecret             = errFmtOIDCClientInvalidSecretIs + "required"
-	errFmtOIDCClientInvalidSecretPlainText    = errFmtOIDCClientInvalidSecretIs + "plaintext but for clients not using the 'token_endpoint_auth_method' of 'client_secret_jwt' it should be a hashed value as plaintext values are deprecated with the exception of 'client_secret_jwt' and will be removed in the near future"
-	errFmtOIDCClientInvalidSecretNotPlainText = errFmtOIDCClientOption + "'client_secret' must be plaintext with option 'token_endpoint_auth_method' with a value of 'client_secret_jwt'"
+	errFmtOIDCClientInvalidSecretPlainText    = errFmtOIDCClientInvalidSecretIs + "plaintext but for clients not using any endpoint authentication method 'client_secret_jwt' it should be a hashed value as plaintext values are deprecated with the exception of 'client_secret_jwt' and will be removed in the near future"
+	errFmtOIDCClientInvalidSecretNotPlainText = errFmtOIDCClientOption + "'client_secret' must be plaintext with option '%s' with a value of 'client_secret_jwt'"
 	errFmtOIDCClientPublicInvalidSecret       = errFmtOIDCClientInvalidSecretIs +
 		"required to be empty when option 'public' is true"
 	errFmtOIDCClientPublicInvalidSecretClientAuthMethod = errFmtOIDCClientInvalidSecretIs +
-		"required to be empty when option 'token_endpoint_auth_method' is configured as '%s'"
+		"required to be empty when option '%s' is configured as '%s'"
 	errFmtOIDCClientIDTooLong           = errFmtOIDCClientOption + "'id' must not be more than 100 characters but it has %d characters"
 	errFmtOIDCClientIDInvalidCharacters = errFmtOIDCClientOption + "'id' must only contain RFC3986 unreserved characters"
 
@@ -269,12 +270,12 @@ const (
 		errFmtMustBeOneOf
 	errFmtOIDCClientInvalidLifespan = errFmtOIDCClientOption +
 		"'lifespan' must not be configured when no custom lifespans are configured but it's configured as '%s'"
-	errFmtOIDCClientInvalidTokenEndpointAuthMethod = errFmtOIDCClientOption +
-		"'token_endpoint_auth_method' must be one of %s when configured as the confidential client type unless it only includes implicit flow response types such as %s but it's configured as '%s'"
-	errFmtOIDCClientInvalidTokenEndpointAuthMethodPublic = errFmtOIDCClientOption +
-		"'token_endpoint_auth_method' must be 'none' when configured as the public client type but it's configured as '%s'"
-	errFmtOIDCClientInvalidTokenEndpointAuthSigAlg = errFmtOIDCClientOption +
-		"'token_endpoint_auth_signing_alg' must be one of %s when option 'token_endpoint_auth_method' is configured to '%s'"
+	errFmtOIDCClientInvalidEndpointAuthMethod = errFmtOIDCClientOption +
+		"'%s' must be one of %s when configured as the confidential client type unless it only includes implicit flow response types such as %s but it's configured as '%s'"
+	errFmtOIDCClientInvalidEndpointAuthMethodPublic = errFmtOIDCClientOption +
+		"'%s' must be 'none' when configured as the public client type but it's configured as '%s'"
+	errFmtOIDCClientInvalidEndpointAuthSigAlg = errFmtOIDCClientOption +
+		"'%s' must be one of %s when option '%s' is configured to '%s'"
 	errFmtOIDCClientInvalidTokenEndpointAuthSigAlgReg = errFmtOIDCClientOption +
 		"'token_endpoint_auth_signing_alg' must be one of the registered public key algorithm values %s when option 'token_endpoint_auth_method' is configured to '%s'"
 	errFmtOIDCClientInvalidTokenEndpointAuthSigAlgMissingPrivateKeyJWT = errFmtOIDCClientOption +
@@ -315,8 +316,10 @@ const (
 
 // WebAuthn Error constants.
 const (
-	errFmtWebAuthnConveyancePreference = "webauthn: option 'attestation_conveyance_preference' must be one of %s but it's configured as '%s'"
-	errFmtWebAuthnUserVerification     = "webauthn: option 'user_verification' must be one of %s but it's configured as '%s'"
+	errFmtWebAuthnConveyancePreference   = "webauthn: option 'attestation_conveyance_preference' must be one of %s but it's configured as '%s'"
+	errFmtWebAuthnSelectionCriteria      = "webauthn: selection_criteria: option '%s' must be one of %s but it's configured as '%s'"
+	errFmtWebAuthnPasskeyDiscoverability = "webauthn: selection_criteria: option 'discoverability' should generally be configured as '%s' or '%s' when passkey logins are enabled" //nolint:gosec
+	errFmtWebAuthnFiltering              = "webauthn: filtering: option 'permitted_aaguids' and 'prohibited_aaguids' are mutually exclusive however both have values"
 )
 
 // Access Control error constants.
@@ -402,6 +405,7 @@ const (
 // Regulation Error Consts.
 const (
 	errFmtRegulationFindTimeGreaterThanBanTime = "regulation: option 'find_time' must be less than or equal to option 'ban_time'"
+	errFmtRegulationInvalidMode                = "regulation: option 'modes' must only contain the values 'user' and 'ip' but contains the value '%s'"
 )
 
 // Server Error constants.
@@ -420,6 +424,7 @@ const (
 	errFmtServerEndpointsAuthzSchemes                   = "server: endpoints: authz: %s: authn_strategies: strategy #%d (%s): option 'schemes' must only include the values %s but has '%s'"
 	errFmtServerEndpointsAuthzSchemesInvalidForStrategy = "server: endpoints: authz: %s: authn_strategies: strategy #%d (%s): option 'schemes' is not valid for the strategy"
 	errFmtServerEndpointsAuthzStrategyNoName            = "server: endpoints: authz: %s: authn_strategies: strategy #%d: option 'name' must be configured"
+	errFmtServerEndpointsAuthzStrategySchemeOnlyOption  = "server: endpoints: authz: %s: authn_strategies: strategy #%d: option '%s' can't be configured unless the '%s' scheme is configured but only the %s schemes are configured"
 	errFmtServerEndpointsAuthzStrategyDuplicate         = "server: endpoints: authz: %s: authn_strategies: duplicate strategy name detected with name '%s'"
 	errFmtServerEndpointsAuthzPrefixDuplicate           = "server: endpoints: authz: %s: endpoint starts with the same prefix as the '%s' endpoint with the '%s' implementation which accepts prefixes as part of its implementation"
 	errFmtServerEndpointsAuthzInvalidName               = "server: endpoints: authz: %s: contains invalid characters"
@@ -514,12 +519,14 @@ var (
 
 var (
 	validStoragePostgreSQLSSLModes           = []string{"disable", "require", "verify-ca", "verify-full"}
-	validThemeNames                          = []string{"light", "dark", "grey", auto}
+	validThemeNames                          = []string{"light", "dark", "grey", "oled", auto}
 	validSessionSameSiteValues               = []string{"none", "lax", "strict"}
 	validLogLevels                           = []string{logging.LevelTrace, logging.LevelDebug, logging.LevelInfo, logging.LevelWarn, logging.LevelError}
 	validLogFormats                          = []string{logging.FormatText, logging.FormatJSON}
 	validWebAuthnConveyancePreferences       = []string{string(protocol.PreferNoAttestation), string(protocol.PreferIndirectAttestation), string(protocol.PreferDirectAttestation)}
 	validWebAuthnUserVerificationRequirement = []string{string(protocol.VerificationDiscouraged), string(protocol.VerificationPreferred), string(protocol.VerificationRequired)}
+	validWebAuthnAttachment                  = []string{string(protocol.Platform), string(protocol.CrossPlatform)}
+	validWebAuthnDiscoverability             = []string{string(protocol.ResidentKeyRequirementDiscouraged), string(protocol.ResidentKeyRequirementPreferred), string(protocol.ResidentKeyRequirementRequired)}
 	validRFC7231HTTPMethodVerbs              = []string{fasthttp.MethodGet, fasthttp.MethodHead, fasthttp.MethodPost, fasthttp.MethodPut, fasthttp.MethodPatch, fasthttp.MethodDelete, fasthttp.MethodTrace, fasthttp.MethodConnect, fasthttp.MethodOptions}
 	validRFC4918HTTPMethodVerbs              = []string{"COPY", "LOCK", "MKCOL", "MOVE", "PROPFIND", "PROPPATCH", "UNLOCK"}
 )
@@ -533,34 +540,41 @@ var (
 var validDefault2FAMethods = []string{"totp", "webauthn", "mobile_push"}
 
 const (
-	attrOIDCKey                   = "key"
-	attrOIDCKeyID                 = "key_id"
-	attrOIDCKeyUse                = "use"
-	attrOIDCAlgorithm             = "algorithm"
-	attrOIDCScopes                = "scopes"
-	attrOIDCResponseTypes         = "response_types"
-	attrOIDCResponseModes         = "response_modes"
-	attrOIDCGrantTypes            = "grant_types"
-	attrOIDCRedirectURIs          = "redirect_uris"
-	attrOIDCRequestURIs           = "request_uris"
-	attrOIDCTokenAuthMethod       = "token_endpoint_auth_method"
-	attrOIDCDiscoSigAlg           = "discovery_signed_response_alg"
-	attrOIDCDiscoSigKID           = "discovery_signed_response_key_id"
-	attrOIDCUsrSigAlg             = "userinfo_signed_response_alg"
-	attrOIDCUsrSigKID             = "userinfo_signed_response_key_id"
-	attrOIDCIntrospectionSigAlg   = "introspection_signed_response_alg"
-	attrOIDCIntrospectionSigKID   = "introspection_signed_response_key_id"
-	attrOIDCAuthorizationSigAlg   = "authorization_signed_response_alg"
-	attrOIDCAuthorizationSigKID   = "authorization_signed_response_key_id"
-	attrOIDCIDTokenSigAlg         = "id_token_signed_response_alg"
-	attrOIDCIDTokenSigKID         = "id_token_signed_response_key_id"
-	attrOIDCAccessTokenSigAlg     = "access_token_signed_response_alg"
-	attrOIDCAccessTokenSigKID     = "access_token_signed_response_key_id"
-	attrOIDCPKCEChallengeMethod   = "pkce_challenge_method"
-	attrOIDCRequestedAudienceMode = "requested_audience_mode"
-	attrSessionAutheliaURL        = "authelia_url"
-	attrSessionDomain             = "domain"
-	attrDefaultRedirectionURL     = "default_redirection_url"
+	attrOIDCKey                         = "key"
+	attrOIDCKeyID                       = "key_id"
+	attrOIDCKeyUse                      = "use"
+	attrOIDCAlgorithm                   = "algorithm"
+	attrOIDCScopes                      = "scopes"
+	attrOIDCResponseTypes               = "response_types"
+	attrOIDCResponseModes               = "response_modes"
+	attrOIDCGrantTypes                  = "grant_types"
+	attrOIDCRedirectURIs                = "redirect_uris"
+	attrOIDCRequestURIs                 = "request_uris"
+	attrOIDCTokenAuthMethod             = "token_endpoint_auth_method"
+	attrOIDCTokenAuthSigningAlg         = "token_endpoint_auth_signing_alg"
+	attrOIDCRevocationAuthMethod        = "revocation_endpoint_auth_method"
+	attrOIDCRevocationAuthSigningAlg    = "revocation_endpoint_auth_signing_alg"
+	attrOIDCIntrospectionAuthMethod     = "introspection_endpoint_auth_method"
+	attrOIDCIntrospectionAuthSigningAlg = "introspection_endpoint_auth_signing_alg"
+	attrOIDCPARAuthMethod               = "pushed_authorization_request_endpoint_auth_method"
+	attrOIDCPARAuthSigningAlg           = "pushed_authorization_request_endpoint_auth_signing_alg"
+	attrOIDCDiscoSigAlg                 = "discovery_signed_response_alg"
+	attrOIDCDiscoSigKID                 = "discovery_signed_response_key_id"
+	attrOIDCUsrSigAlg                   = "userinfo_signed_response_alg"
+	attrOIDCUsrSigKID                   = "userinfo_signed_response_key_id"
+	attrOIDCIntrospectionSigAlg         = "introspection_signed_response_alg"
+	attrOIDCIntrospectionSigKID         = "introspection_signed_response_key_id"
+	attrOIDCAuthorizationSigAlg         = "authorization_signed_response_alg"
+	attrOIDCAuthorizationSigKID         = "authorization_signed_response_key_id"
+	attrOIDCIDTokenSigAlg               = "id_token_signed_response_alg"
+	attrOIDCIDTokenSigKID               = "id_token_signed_response_key_id"
+	attrOIDCAccessTokenSigAlg           = "access_token_signed_response_alg"
+	attrOIDCAccessTokenSigKID           = "access_token_signed_response_key_id"
+	attrOIDCPKCEChallengeMethod         = "pkce_challenge_method"
+	attrOIDCRequestedAudienceMode       = "requested_audience_mode"
+	attrSessionAutheliaURL              = "authelia_url"
+	attrSessionDomain                   = "domain"
+	attrDefaultRedirectionURL           = "default_redirection_url"
 )
 
 var (
@@ -568,7 +582,7 @@ var (
 )
 
 var (
-	validOIDCCORSEndpoints = []string{oidc.EndpointAuthorization, oidc.EndpointPushedAuthorizationRequest, oidc.EndpointToken, oidc.EndpointIntrospection, oidc.EndpointRevocation, oidc.EndpointUserinfo}
+	validOIDCCORSEndpoints = []string{oidc.EndpointAuthorization, oidc.EndpointDeviceAuthorization, oidc.EndpointPushedAuthorizationRequest, oidc.EndpointToken, oidc.EndpointIntrospection, oidc.EndpointRevocation, oidc.EndpointUserinfo}
 
 	validOIDCReservedClaims                  = []string{oidc.ClaimJWTID, oidc.ClaimSessionID, oidc.ClaimAuthorizedParty, oidc.ClaimClientIdentifier, oidc.ClaimScope, oidc.ClaimScopeNonStandard, oidc.ClaimIssuer, oidc.ClaimSubject, oidc.ClaimAudience, oidc.ClaimSessionID, oidc.ClaimStateHash, oidc.ClaimCodeHash, oidc.ClaimIssuedAt, oidc.ClaimUpdatedAt, oidc.ClaimRequestedAt, oidc.ClaimNotBefore, oidc.ClaimExpirationTime, oidc.ClaimAuthenticationTime, oidc.ClaimAuthenticationMethodsReference, oidc.ClaimAuthenticationContextClassReference, oidc.ClaimNonce}
 	validOIDCClientClaims                    = []string{oidc.ClaimFullName, oidc.ClaimGivenName, oidc.ClaimFamilyName, oidc.ClaimMiddleName, oidc.ClaimNickname, oidc.ClaimPreferredUsername, oidc.ClaimProfile, oidc.ClaimPicture, oidc.ClaimWebsite, oidc.ClaimEmail, oidc.ClaimEmailVerified, oidc.ClaimGender, oidc.ClaimBirthdate, oidc.ClaimZoneinfo, oidc.ClaimLocale, oidc.ClaimPhoneNumber, oidc.ClaimPhoneNumberVerified, oidc.ClaimAddress, oidc.ClaimGroups, oidc.ClaimEmailAlts}
@@ -579,12 +593,13 @@ var (
 	validOIDCClientResponseTypesImplicitFlow = []string{oidc.ResponseTypeImplicitFlowIDToken, oidc.ResponseTypeImplicitFlowToken, oidc.ResponseTypeImplicitFlowBoth}
 	validOIDCClientResponseTypesHybridFlow   = []string{oidc.ResponseTypeHybridFlowIDToken, oidc.ResponseTypeHybridFlowToken, oidc.ResponseTypeHybridFlowBoth}
 	validOIDCClientResponseTypesRefreshToken = []string{oidc.ResponseTypeAuthorizationCodeFlow, oidc.ResponseTypeHybridFlowIDToken, oidc.ResponseTypeHybridFlowToken, oidc.ResponseTypeHybridFlowBoth}
-	validOIDCClientGrantTypes                = []string{oidc.GrantTypeAuthorizationCode, oidc.GrantTypeImplicit, oidc.GrantTypeClientCredentials, oidc.GrantTypeRefreshToken}
+	validOIDCClientGrantTypes                = []string{oidc.GrantTypeAuthorizationCode, oidc.GrantTypeImplicit, oidc.GrantTypeClientCredentials, oidc.GrantTypeRefreshToken, oidc.GrantTypeDeviceCode}
 
 	validOIDCClientTokenEndpointAuthMethods                = []string{oidc.ClientAuthMethodNone, oidc.ClientAuthMethodClientSecretPost, oidc.ClientAuthMethodClientSecretBasic, oidc.ClientAuthMethodPrivateKeyJWT, oidc.ClientAuthMethodClientSecretJWT}
 	validOIDCClientTokenEndpointAuthMethodsConfidential    = []string{oidc.ClientAuthMethodClientSecretPost, oidc.ClientAuthMethodClientSecretBasic, oidc.ClientAuthMethodPrivateKeyJWT}
 	validOIDCClientTokenEndpointAuthSigAlgsClientSecretJWT = []string{oidc.SigningAlgHMACUsingSHA256, oidc.SigningAlgHMACUsingSHA384, oidc.SigningAlgHMACUsingSHA512}
 	validOIDCIssuerJWKSigningAlgs                          = []string{oidc.SigningAlgRSAUsingSHA256, oidc.SigningAlgRSAPSSUsingSHA256, oidc.SigningAlgECDSAUsingP256AndSHA256, oidc.SigningAlgRSAUsingSHA384, oidc.SigningAlgRSAPSSUsingSHA384, oidc.SigningAlgECDSAUsingP384AndSHA384, oidc.SigningAlgRSAUsingSHA512, oidc.SigningAlgRSAPSSUsingSHA512, oidc.SigningAlgECDSAUsingP521AndSHA512}
+	validOIDCJWKEncryptionAlgs                             = []string{oidc.EncryptionAlgRSA15, oidc.EncryptionAlgRSAOAEP, oidc.EncryptionAlgRSAOAEP256, oidc.EncryptionAlgA128KW, oidc.EncryptionAlgA192KW, oidc.EncryptionAlgA256KW, oidc.EncryptionAlgDirect, oidc.EncryptionAlgECDHES, oidc.EncryptionAlgECDHESA128KW, oidc.EncryptionAlgECDHESA192KW, oidc.EncryptionAlgECDHESA256KW, oidc.EncryptionAlgA128GCMKW, oidc.EncryptionAlgA192GCMKW, oidc.EncryptionAlgA256GCMKW, oidc.EncryptionAlgPBES2HS256A128KW, oidc.EncryptionAlgPBES2HS284A192KW, oidc.EncryptionAlgPBES2HS512A256KW}
 
 	validOIDCClientScopesBearerAuthz        = []string{oidc.ScopeOfflineAccess, oidc.ScopeOffline, oidc.ScopeAutheliaBearerAuthz}
 	validOIDCClientResponseModesBearerAuthz = []string{oidc.ResponseModeFormPost, oidc.ResponseModeFormPostJWT}
